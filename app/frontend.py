@@ -118,7 +118,7 @@ def main():
                         display_results(data)
                 except Exception as e:
                     st.error(f"Validation failed: {str(e)}")
-                    st.info("Check your GROQ_API_KEY and internet connection.")
+                    
         else:
             st.write("Results will appear here after execution.")
             st.image("https://img.freepik.com/free-vector/growth-concept-illustration_114360-1282.jpg", width=400)
