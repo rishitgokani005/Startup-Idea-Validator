@@ -126,6 +126,43 @@ class SpecializedAgents:
             )
         )
 
+class InputValidatorAgent:
+    def __init__(self):
+        self.client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+        self.model = "llama-3.3-70b-versatile"
+
+    def is_valid(self, title: str, audience: str, description: str) -> Dict:
+        """Checks if the input describes a potentially valid startup idea or if it's gibberish/invalid."""
+        prompt = (
+            "You are a gatekeeper for a startup validation tool. Your task is to determine if the following input "
+            "is a legitimate startup idea or just gibberish, random characters, or completely nonsensical text.\n\n"
+            f"Title: {title}\n"
+            f"Target Audience: {audience}\n"
+            f"Description: {description}\n\n"
+            "Rules:\n"
+            "1. If it looks like a real attempt at a startup idea (even a bad one), return 'VALID'.\n"
+            "2. If it is random characters (e.g., 'ejoiejoia'), single word spam, incoherent rambling, or offensive non-startup content, return 'INVALID' followed by a short reason why it was rejected.\n"
+            "3. Format: 'STATUS: VALID' or 'STATUS: INVALID | Reason: [short reason]'"
+        )
+
+        try:
+            chat_completion = self.client.chat.completions.create(
+                messages=[{"role": "user", "content": prompt}],
+                model=self.model,
+                temperature=0.1,
+            )
+            response = chat_completion.choices[0].message.content
+            if "STATUS: VALID" in response:
+                return {"is_valid": True}
+            else:
+                reason_match = re.search(r"Reason:\s*(.*)", response)
+                reason = reason_match.group(1) if reason_match else "Incoherent or invalid input detected."
+                return {"is_valid": False, "reason": reason}
+        except Exception:
+            # Fallback to basic length/pattern check if API fails
+            if len(description) < 10 or len(title) < 2:
+                return {"is_valid": False, "reason": "Input is too short to be a valid idea."}
+            return {"is_valid": True}
 class SynthesizerAgent:
     def __init__(self):
         self.client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
@@ -175,7 +212,16 @@ class SynthesizerAgent:
 
 def run_validation_pipeline(idea_title: str, target_audience: str, description: str):
     """Orchestrates the entire multi-agent validation loop."""
+    
+    # --- Step 0: Input Validation ---
+    validator = InputValidatorAgent()
+    validation_status = validator.is_valid(idea_title, target_audience, description)
+    
+    if not validation_status["is_valid"]:
+        raise ValueError(f"Invalid Startup Idea: {validation_status['reason']}")
+
     idea_context = f"Title: {idea_title}\nTarget Audience: {target_audience}\nDescription: {description}"
+
     
     agents = [
         SpecializedAgents.get_skeptical_vc(),
