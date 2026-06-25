@@ -1,0 +1,32 @@
+# Multi-Agent Startup Idea Validator - Setup Guide
+
+Follow these steps to get your validator up and running:
+
+## 1. Environment Configuration
+- Create a file named `.env` in the root directory.
+- Copy the contents from `.env.example` into `.env`.
+- Get your Groq API Key from: https://console.groq.com/
+- Add your key to the `.env` file: `GROQ_API_KEY=gsk_...`
+
+## 2. Install Dependencies
+Open your terminal and run:
+`pip install -r requirements.txt`
+
+## 3. Run the Backend API (FastAPI)
+In a terminal, run:
+`uvicorn app.main:app --reload`
+The backend will be available at http://localhost:8000
+
+## 4. Run the Frontend (Streamlit)
+In a NEW terminal (keep the backend running), run:
+`streamlit run app/frontend.py`
+The dashboard will open automatically in your browser (usually at http://localhost:8501)
+
+## 5. Usage
+- Enter your startup idea title, target audience, and detailed description.
+- Click 'Execute Validation Audit'.
+- Watch as four specialized AI agents (VC, Customer, Growth, Tech) audit your idea.
+- Review the aggregate score and executive summary!
+
+---
+Note: Ensure you have an active internet connection for LLM inference via Groq.
